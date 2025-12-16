@@ -1,0 +1,16 @@
+# =============================================================================
+# INIT DB PLAYBOOK - playbooks/init_db.yml
+# =============================================================================
+# Initialize database only (run once)
+# Run with: ansible-playbook -i inventory/hosts.yml playbooks/init_db.yml
+# =============================================================================
+
+---
+- name: Initialize Database
+  hosts: app
+  gather_facts: yes
+  vars_files:
+    - ../inventory/group_vars/all.yml
+  roles:
+    - db_init
+  run_once: true

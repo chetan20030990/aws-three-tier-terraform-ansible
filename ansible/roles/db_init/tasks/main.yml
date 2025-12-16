@@ -1,0 +1,56 @@
+# =============================================================================
+# DB_INIT ROLE - tasks/main.yml
+# =============================================================================
+# This role initializes the RDS MySQL database
+# Tasks:
+# 1. Install MySQL client
+# 2. Create the items table
+# 3. Insert sample data
+#
+# NOTE: This runs from an app instance that can reach RDS
+# =============================================================================
+
+---
+- name: Install MySQL client
+  yum:
+    name: mysql
+    state: present
+  become: yes
+
+- name: Wait for RDS to be available
+  wait_for:
+    host: "{{ db_host }}"
+    port: 3306
+    timeout: 300
+    state: started
+  
+- name: Create items table
+  shell: |
+    mysql -h {{ db_host }} -u {{ db_username }} -p'{{ db_password }}' {{ db_name }} << EOF
+    CREATE TABLE IF NOT EXISTS items (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    EOF
+  register: create_table
+  changed_when: "'already exists' not in create_table.stderr"
+  failed_when: create_table.rc != 0 and 'already exists' not in create_table.stderr
+
+- name: Check if items exist
+  shell: |
+    mysql -h {{ db_host }} -u {{ db_username }} -p'{{ db_password }}' {{ db_name }} -N -e "SELECT COUNT(*) FROM items;"
+  register: item_count
+  changed_when: false
+
+- name: Insert sample items
+  shell: |
+    mysql -h {{ db_host }} -u {{ db_username }} -p'{{ db_password }}' {{ db_name }} << EOF
+    INSERT INTO items (name) VALUES 
+      ('Terraform Module'),
+      ('Ansible Role'),
+      ('Flask API'),
+      ('RDS MySQL'),
+      ('Auto Scaling Group');
+    EOF
+  when: item_count.stdout | int == 0

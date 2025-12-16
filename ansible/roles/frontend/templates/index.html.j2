@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capstone Project - Flask API Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #eee;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #00d9ff;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card h2 {
+            color: #00d9ff;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        button {
+            background: #00d9ff;
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #00b8d9;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #items-list {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            min-height: 100px;
+        }
+        .item {
+            padding: 10px 15px;
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid #00d9ff;
+            margin-bottom: 10px;
+            border-radius: 0 6px 6px 0;
+        }
+        .error {
+            color: #ff6b6b;
+            padding: 15px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 6px;
+        }
+        .loading {
+            color: #888;
+            font-style: italic;
+        }
+        .info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .info-item {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+        }
+        .info-item label {
+            color: #888;
+            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .info-item span {
+            color: #00d9ff;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Capstone Project</h1>
+        <p class="subtitle">Multi-Tier Application with Terraform, Ansible & AWS Auto-Scaling</p>
+        
+        <div class="card">
+            <h2>📊 Database Items</h2>
+            <button id="fetch-btn" onclick="fetchItems()">Fetch Items from Database</button>
+            <div id="items-list">
+                <p class="loading">Click the button to fetch items from the Flask API...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>ℹ️ Architecture Info</h2>
+            <div class="info">
+                <div class="info-item">
+                    <label>Frontend</label>
+                    <span>Nginx (EC2)</span>
+                </div>
+                <div class="info-item">
+                    <label>API Endpoint</label>
+                    <span>/api/items</span>
+                </div>
+                <div class="info-item">
+                    <label>Backend</label>
+                    <span>Flask (Auto-Scaling)</span>
+                </div>
+                <div class="info-item">
+                    <label>Database</label>
+                    <span>AWS RDS MySQL</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchItems() {
+            const btn = document.getElementById('fetch-btn');
+            const list = document.getElementById('items-list');
+            
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+            list.innerHTML = '<p class="loading">Fetching items from Flask API...</p>';
+            
+            try {
+                const response = await fetch('/api/items');
+                const items = await response.json();
+                
+                if (items.error) {
+                    list.innerHTML = `<p class="error">Error: ${items.error}</p>`;
+                } else if (items.length === 0) {
+                    list.innerHTML = '<p class="loading">No items found in database.</p>';
+                } else {
+                    list.innerHTML = items.map(item => 
+                        `<div class="item">${item}</div>`
+                    ).join('');
+                }
+            } catch (err) {
+                list.innerHTML = `<p class="error">Failed to fetch items: ${err.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Fetch Items from Database';
+            }
+        }
+    </script>
+</body>
+</html>

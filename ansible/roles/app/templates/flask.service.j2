@@ -1,0 +1,31 @@
+# =============================================================================
+# Flask Systemd Service File
+# =============================================================================
+# This configures Flask as a systemd service so it:
+# - Starts automatically on boot
+# - Restarts if it crashes
+# - Runs with gunicorn for production performance
+# =============================================================================
+
+[Unit]
+Description=Flask Application (Capstone Project)
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/flask-app
+
+# Use gunicorn for production - 4 workers, bind to port 5000
+ExecStart=/usr/local/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 app:app
+
+# Restart policy
+Restart=always
+RestartSec=5
+
+# Environment variables (optional - can add more here)
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+[Install]
+WantedBy=multi-user.target

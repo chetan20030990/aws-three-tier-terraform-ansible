@@ -1,0 +1,42 @@
+# =============================================================================
+# .gitignore - Files to exclude from version control
+# =============================================================================
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars        # Contains secrets!
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ansible
+*.retry
+inventory/dynamic_inventory.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets
+*.pem
+*.key
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Sensitive
+terraform.tfvars
+*.pem

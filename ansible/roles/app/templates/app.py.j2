@@ -1,0 +1,60 @@
+# =============================================================================
+# Flask Application - app.py
+# =============================================================================
+# This is the main Flask API that connects to RDS MySQL
+# Variables ({{ }}) are replaced by Ansible with actual values
+# =============================================================================
+
+from flask import Flask, jsonify
+import mysql.connector
+import os
+
+app = Flask(__name__)
+
+# Database configuration - these values come from Ansible variables
+DB_CONFIG = {
+    'host': '{{ db_host }}',
+    'user': '{{ db_username }}',
+    'password': '{{ db_password }}',
+    'database': '{{ db_name }}'
+}
+
+@app.route('/items')
+def get_items():
+    """
+    GET /items - Returns a JSON list of items from the database
+    This is the main endpoint required by the capstone project
+    """
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM items;")
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify([r[0] for r in rows])
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+@app.route('/health')
+def health():
+    """
+    Health check endpoint for ALB
+    Returns 200 OK if the application is running
+    """
+    return jsonify({"status": "healthy"})
+
+@app.route('/')
+def index():
+    """
+    Root endpoint - provides basic info
+    """
+    return jsonify({
+        "application": "Capstone Flask API",
+        "endpoints": ["/items", "/health"],
+        "status": "running"
+    })
+
+if __name__ == '__main__':
+    # Run with gunicorn in production, this is for development
+    app.run(host='0.0.0.0', port=5000)

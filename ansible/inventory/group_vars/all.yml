@@ -1,0 +1,16 @@
+# =============================================================================
+# GROUP VARIABLES - all.yml
+# =============================================================================
+# Variables shared across all hosts
+# These values are from terraform output
+# =============================================================================
+
+---
+# Database configuration (from terraform output)
+db_host: "capstone-mysql.c0bku2m4e4ib.us-east-1.rds.amazonaws.com"
+db_name: "capstone"
+db_username: "admin"
+db_password: "CapstonePass123!"  # Match your terraform.tfvars
+
+# ALB DNS (from terraform output)
+alb_dns_name: "capstone-alb-1884452647.us-east-1.elb.amazonaws.com"

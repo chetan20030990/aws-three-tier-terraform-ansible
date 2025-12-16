@@ -1,0 +1,13 @@
+# =============================================================================
+# APP ROLE - handlers/main.yml
+# =============================================================================
+# Handlers are triggered by 'notify' in tasks
+# They only run once at the end, even if notified multiple times
+# =============================================================================
+
+---
+- name: Restart flask
+  systemd:
+    name: flask
+    state: restarted
+  become: yes

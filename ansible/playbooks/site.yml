@@ -1,0 +1,91 @@
+# =============================================================================
+# SITE PLAYBOOK - Using raw/shell modules to avoid Python issues
+# =============================================================================
+
+---
+- name: Deploy Application
+  hosts: app
+  gather_facts: no
+  vars:
+    db_host: "capstone-mysql.c0bku2m4e4ib.us-east-1.rds.amazonaws.com"
+    db_name: "capstone"
+    db_username: "admin"
+    db_password: "CapstonePass123!"
+    ansible_python_interpreter: /usr/bin/python3
+  
+  tasks:
+    # -------------------------------------------------------------------------
+    # Create app directory
+    # -------------------------------------------------------------------------
+    - name: Create app directory
+      raw: sudo mkdir -p /opt/flask-app && sudo chown ec2-user:ec2-user /opt/flask-app
+
+    - name: Deploy Flask application code
+      raw: |
+        cat > /opt/flask-app/app.py << 'EOF'
+        from flask import Flask, jsonify
+        import mysql.connector
+        
+        app = Flask(__name__)
+        
+        DB_CONFIG = {
+            'host': '{{ db_host }}',
+            'user': '{{ db_username }}',
+            'password': '{{ db_password }}',
+            'database': '{{ db_name }}'
+        }
+        
+        @app.route('/items')
+        def get_items():
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+                cursor.execute("SELECT name FROM items;")
+                rows = cursor.fetchall()
+                cursor.close()
+                conn.close()
+                return jsonify([r[0] for r in rows])
+            except mysql.connector.Error as err:
+                return jsonify({"error": str(err)}), 500
+        
+        @app.route('/health')
+        def health():
+            return jsonify({"status": "healthy"})
+        
+        @app.route('/')
+        def index():
+            return jsonify({
+                "application": "Capstone Flask API",
+                "endpoints": ["/items", "/health"],
+                "status": "running"
+            })
+        
+        if __name__ == '__main__':
+            app.run(host='0.0.0.0', port=5000)
+        EOF
+
+    - name: Deploy systemd service file
+      raw: |
+        sudo tee /etc/systemd/system/flask.service > /dev/null << 'EOF'
+        [Unit]
+        Description=Flask Application
+        After=network.target
+        
+        [Service]
+        Type=simple
+        User=ec2-user
+        Group=ec2-user
+        WorkingDirectory=/opt/flask-app
+        ExecStart=/usr/local/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 app:app
+        Restart=always
+        RestartSec=5
+        
+        [Install]
+        WantedBy=multi-user.target
+        EOF
+
+    - name: Reload systemd
+      raw: sudo systemctl daemon-reload
+
+    - name: Enable flask service
+      raw: sudo systemctl enable flask

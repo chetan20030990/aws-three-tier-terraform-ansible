@@ -1,0 +1,78 @@
+# =============================================================================
+# APP ROLE - tasks/main.yml
+# =============================================================================
+# This role deploys the Flask API application to EC2 instances
+# Tasks:
+# 1. Install Python and dependencies
+# 2. Create app directory
+# 3. Deploy Flask application code
+# 4. Configure systemd service
+# 5. Start the service
+# =============================================================================
+
+---
+- name: Update yum cache
+  yum:
+    update_cache: yes
+  become: yes
+
+- name: Install Python 3 and pip
+  yum:
+    name:
+      - python3
+      - python3-pip
+      - python3-devel
+      - gcc
+      - mysql-devel
+    state: present
+  become: yes
+
+- name: Install Python packages
+  pip:
+    name:
+      - flask
+      - mysql-connector-python
+      - gunicorn
+    executable: pip3
+  become: yes
+
+- name: Create application directory
+  file:
+    path: /opt/flask-app
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+  become: yes
+
+- name: Deploy Flask application
+  template:
+    src: app.py.j2
+    dest: /opt/flask-app/app.py
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+  become: yes
+  notify: Restart flask
+
+- name: Deploy systemd service file
+  template:
+    src: flask.service.j2
+    dest: /etc/systemd/system/flask.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: Restart flask
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  become: yes
+
+- name: Enable and start Flask service
+  systemd:
+    name: flask
+    enabled: yes
+    state: started
+  become: yes

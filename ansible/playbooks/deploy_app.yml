@@ -1,0 +1,15 @@
+# =============================================================================
+# DEPLOY APP PLAYBOOK - playbooks/deploy_app.yml
+# =============================================================================
+# Deploy only the Flask app (useful for updates)
+# Run with: ansible-playbook -i inventory/hosts.yml playbooks/deploy_app.yml
+# =============================================================================
+
+---
+- name: Deploy Flask Application
+  hosts: app
+  gather_facts: yes
+  vars_files:
+    - ../inventory/group_vars/all.yml
+  roles:
+    - app
